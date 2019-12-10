@@ -1,0 +1,63 @@
+//Author: Patrick Edwards
+//Course: CPT 187
+//Purpose: Education
+//CreateDate: Dec 3, 2019
+
+package edu.cpt187.edwards.participation;
+
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Scanner;
+import java.io.IOException;
+
+public class OrderWriter 
+{
+	//Initialize variables
+	private String masterFileName = "";
+	private int recordCount = 0;
+	
+	
+	public OrderWriter(String borrowedFileName)
+	{
+		masterFileName = borrowedFileName;
+	}//End OrderWriter Constructor
+	
+	public void setWriteOrder(int borrowedItemID, String borrowedItemName, double borrowedItemPrice, int borrowedQuantity, double borrowedOrderCost)
+	{
+		final int NOT_FOUND = -1;
+		final int RESET_VALUE = 0;
+		
+		if (recordCount < RESET_VALUE)
+		{
+			recordCount = RESET_VALUE;
+		}
+		
+		try
+		{
+			PrintWriter filePW = new PrintWriter(new FileWriter(masterFileName, true));
+			
+			filePW.printf("%d\t%s\t%8.2f\t%d\t%8.2f\r", borrowedItemID, borrowedItemName, borrowedItemPrice, borrowedQuantity, borrowedOrderCost);
+			
+			filePW.close();
+			
+			recordCount++;
+		}//End try
+		catch(IOException ex)
+		{
+			recordCount = NOT_FOUND;
+		}//End catch
+	}//End setWriteOrder
+	
+	public String getFileName(Scanner borrowedInput)
+	{
+		
+		return masterFileName;
+		
+	}//End getFileName
+	
+	public int getRecordCount()
+	{
+		return recordCount;
+	}//End getRecordCount
+
+}//End OrderWriter Class

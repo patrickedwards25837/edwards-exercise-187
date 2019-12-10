@@ -1,0 +1,388 @@
+//Author: Patrick Edwards
+//Course: CPT 187
+//Purpose: Education
+//CreateDate: Dec 5, 2019
+
+package edu.cpt187.edwards.participation;
+
+import java.util.Scanner;
+
+public class MainClass {
+
+	public static final String[] MENU_OPTIONS = {"Load Inventory", "Create Order", "Quit"};
+	public static final String MASTER_FILE_NAME = "orders.txt";
+
+	public static void main(String[] args) 
+	{
+		//Create Scanner
+		Scanner input = new Scanner(System.in);
+
+		//Create SodOrder
+		SodOrder mySodOrder = new SodOrder();
+
+		//Create Inventory
+		Inventory currentInventory = new Inventory();
+
+		OrderWriter sodOrders = new OrderWriter(MASTER_FILE_NAME);
+
+		//Initialize variables
+		String userName = "";
+		char menuSelection = ' ';
+
+		//Welcome Banner
+		displayWelcomeBanner();
+
+		//Input
+		userName = getUserName(input);
+		menuSelection = validateMainMenu(input);
+
+		while (menuSelection != 'Q')
+		{
+			if (menuSelection =='A')
+			{
+				currentInventory.setLoadItems(getFileName(input));
+
+				if (currentInventory.getRecordCount() <= 0)
+				{
+					displayNotOpen();
+				}
+				else
+				{
+					mySodOrder.setItemCountArray(currentInventory.getRecordCount());
+				}//End if currentInventory.getRecordCount() <= 0 decision
+
+			}
+			else
+			{
+				currentInventory.setSearchIndex(validateSearchValue(input));
+
+				if (currentInventory.getSearchIndex() < 0)
+				{
+					displayNotFound();
+				}
+				else
+				{
+					mySodOrder.setItemSelection(currentInventory.getSearchIndex());
+					mySodOrder.setItemName(currentInventory.getItemNames());
+					mySodOrder.setItemPrice(currentInventory.getItemPrices());
+					mySodOrder.setHowMany(validateHowMany(input));
+
+					if (mySodOrder.getInStockCount(currentInventory.getInStockCounts()) < mySodOrder.getHowMany())
+					{
+						displayOutOfStock();
+					}
+					else
+					{
+						mySodOrder.setDiscountType(validateDiscountMenu(input, currentInventory.getDiscountNames(), currentInventory.getDiscountRates()));
+						mySodOrder.setDiscountName(currentInventory.getDiscountNames());
+						mySodOrder.setDiscountRate(currentInventory.getDiscountRates());
+						mySodOrder.setDecreaseInStock(currentInventory);
+						mySodOrder.setPrizeName(currentInventory.getPrizeNames(), currentInventory.getRandomNumber());
+
+						sodOrders.setWriteOrder(mySodOrder.getItemID(currentInventory.getItemIDs()), mySodOrder.getItemName(), mySodOrder.getItemPrice(), mySodOrder.getHowMany(), mySodOrder.getTotalCost());
+
+						if (mySodOrder.getDiscountRate() > 0.0)
+						{
+							displayItemReceipt(mySodOrder.getItemName(), mySodOrder.getItemPrice(), mySodOrder.getHowMany(), mySodOrder.getDiscountName(), mySodOrder.getDiscountRate(), mySodOrder.getDiscountAmt(), mySodOrder.getDiscountPrice(), mySodOrder.getSubTotal(), mySodOrder.getTaxRate(), mySodOrder.getTaxAmt(), mySodOrder.getTotalCost(), mySodOrder.getPrizeName());
+						}
+						else
+						{
+							displayItemReceipt(mySodOrder.getItemName(), mySodOrder.getItemPrice(), mySodOrder.getHowMany(), mySodOrder.getSubTotal(), mySodOrder.getTaxRate(), mySodOrder.getTaxAmt(), mySodOrder.getTotalCost(), mySodOrder.getPrizeName());
+						}//End if mySodOrder.getDiscountRate() > 0.0 decision
+
+					}//End if mySodOrder.getInStockCount(currentInventory.getInStockCounts()) < mySodOrder.getHowMany() decision
+
+				}//End if currentInventory.getSearchIndex() < 0 decision
+
+			}//End if menuSelection =='A' decision
+
+			menuSelection = validateMainMenu(input);
+
+		}//End while menuSelection != 'Q' loop
+
+		if (mySodOrder.getTotalCost() > 0.0)
+		{
+			currentInventory.setLoadItems(sodOrders.getFileName(input), sodOrders.getRecordCount());
+
+			displayFinalReport(userName, currentInventory.getItemIDs(), currentInventory.getItemNames(), currentInventory.getItemPrices(), currentInventory.getOrderQuantity(), currentInventory.getOrderTotal(), mySodOrder.getItemCounts(), currentInventory.getDiscountNames(), mySodOrder.getDiscountCounts(), currentInventory.getPrizeNames(), mySodOrder.getPrizeCounts(), currentInventory.getInStockCounts(), sodOrders.getRecordCount());
+
+		}//End if mySodOrder.getTotalCost() > 0.0 decision
+
+		displayFarewellMessage();
+
+	}//End of main
+
+	public static void displayWelcomeBanner()
+	{
+		System.out.println("Welcome to SodNotZod!");
+		System.out.println("The best place this side of the galaxy");
+		System.out.println("to procure quality sod without kryponite.");
+		System.out.println("");
+	}//End displayWelcomeBanner
+
+	public static void displayMainMenu()
+	{
+		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+		System.out.println("\t--Main Menu--\n");
+		System.out.printf("%-8s%-16s\n","[A] for", MENU_OPTIONS[0]);
+		System.out.printf("%-8s%-16s\n","[B] for", MENU_OPTIONS[1]);
+		System.out.printf("%-8s%-16s\n","[Q] for", MENU_OPTIONS[2]);
+		System.out.println("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n");
+		System.out.println("");
+		System.out.println( "What is your choice?");
+		System.out.println("");
+	}//End displayMainMenu
+
+	public static void displayDiscountMenu(String[] borrowedDiscountNames, double[] borrowedDiscountRates)
+	{
+		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+		System.out.println("\t--Discount Menu--\n");
+		System.out.printf("%-8s%-16s%4.1f%%\n","[A] for", borrowedDiscountNames[0], borrowedDiscountRates[0] * 100);
+		System.out.printf("%-8s%-16s%4.1f%%\n","[B] for", borrowedDiscountNames[1], borrowedDiscountRates[1] * 100);
+		System.out.printf("%-8s%-16s%4.1f%%\n","[C] for", borrowedDiscountNames[2], borrowedDiscountRates[2] * 100);
+		System.out.println("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n");
+		System.out.println("");
+		System.out.println( "What is your choice?");
+		System.out.println("");
+	}//End displayDiscountMenu
+
+	public static void displayErrorMessage()
+	{
+		System.out.println("\n>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<");
+		System.out.println("\t>*~*< Invalid selection >*~*<");
+		System.out.println(">~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<\n");
+	}//End displayErrorMessage
+
+	public static void displayNotOpen()
+	{
+		System.out.println("\n>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<");
+		System.out.println("\t>*~*< Cannot locate or open file >*~*<");
+		System.out.println(">~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<\n");
+	}//End displayNotOpen
+
+	public static void displayNotFound()
+	{
+		System.out.println("\n>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<");
+		System.out.println("\t>*~*< Not Found >*~*<");
+		System.out.println(">~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<\n");
+	}//End displayNotFound
+
+	public static void displayOutOfStock()
+	{
+		System.out.println("\n>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<");
+		System.out.println("\t>*~*< That item is out of stock >*~*<");
+		System.out.println(">~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<>~#@^<\n");
+	}//End displayOutOfStock
+
+	public static String getUserName(Scanner borrowedInput)
+	{
+		String localUserName = "";
+		System.out.println("First, what is your name?");
+		System.out.println("");
+		localUserName = borrowedInput.next();
+		System.out.printf("\n%s%s%s\n", "Thank you ", localUserName, "!");
+
+		return localUserName;
+
+	}//end getUserName
+
+	public static String getFileName(Scanner borrowedInput)
+	{
+		String localFileName = "";
+		System.out.println("Enter the file name including extension type(e.g. .txt).");
+		System.out.println();
+		localFileName = borrowedInput.next();
+
+		return localFileName;
+
+	}//End getFileName
+
+	public static char validateMainMenu(Scanner borrowedInput)
+	{
+		char validateMainMenu = ' ';
+		displayMainMenu();
+		validateMainMenu = borrowedInput.next().toUpperCase().charAt(0);
+
+		while (validateMainMenu != 'A' && validateMainMenu != 'B' && validateMainMenu != 'Q')
+		{
+			displayErrorMessage();
+
+			displayMainMenu();
+			validateMainMenu = borrowedInput.next().toUpperCase().charAt(0);
+
+		}//End validateMainMenu Loop
+
+		return validateMainMenu;
+
+	}//End validateMainMenu
+
+	public static char validateDiscountMenu(Scanner borrowedInput, String[] borrowedDiscountNames, double[] borrowedDiscountRates)
+	{
+		char validateDiscountMenu = ' ';
+		displayDiscountMenu(borrowedDiscountNames, borrowedDiscountRates);
+		validateDiscountMenu = borrowedInput.next().toUpperCase().charAt(0);
+
+		while (validateDiscountMenu != 'A' && validateDiscountMenu != 'B' && validateDiscountMenu != 'C')
+		{
+			displayErrorMessage();
+
+			displayDiscountMenu(borrowedDiscountNames, borrowedDiscountRates);
+			validateDiscountMenu = borrowedInput.next().toUpperCase().charAt(0);
+
+		}//End validateDiscountMenu Loop
+
+		return validateDiscountMenu;
+
+	}//End validateDiscountMenu
+
+	public static int validateHowMany(Scanner borrowedInput)
+	{
+		int localHowMany = 0;
+		System.out.println("\nHow many would you like?\n");
+		localHowMany = borrowedInput.nextInt();
+
+		while (localHowMany <= 0)
+		{
+			displayErrorMessage();
+			System.out.println("\nHow many would you like?\n");
+			localHowMany = borrowedInput.nextInt();
+
+		}//End of validateHowMany Loop
+
+		return localHowMany;
+
+	}//End validateHowMany
+
+	public static int validateSearchValue(Scanner borrowedInput)
+	{
+		int localSearchValue = 0; 
+		System.out.println("\nEnter an item ID number.");
+		localSearchValue = borrowedInput.nextInt();
+
+		while (localSearchValue <= 0)
+		{
+			displayErrorMessage();
+			System.out.println("\nEnter an item ID number.");
+			localSearchValue = borrowedInput.nextInt();
+		}//End while localSearchValue < 0 loop
+
+		return localSearchValue;
+
+	}//End validateSearchValue
+
+	public static void displayItemReceipt(String borrowedItemName, double borrowedItemPrice, int borrowedHowMany, double borrowedSubTotal, double borrowedTaxRate, double borrowedTaxAmt, double borrowedTotalCost, String borrowedPrizeName)
+	{
+		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+		System.out.println("\t--Item Receipt--\n");
+		System.out.printf("%-25s%-20s\n","Item Name:", borrowedItemName);
+		System.out.printf("%-25s%1s%12.2f\n","Item Price:", "$",  borrowedItemPrice);
+		System.out.printf("%-25s%10d\n","Number of Item:", borrowedHowMany);		
+		System.out.printf("%-25s%1s%,12.2f\n","Subtotal:", "$", borrowedSubTotal);
+		System.out.printf("%-25s%12.1f%%\n","Tax Rate:", borrowedTaxRate * 100);
+		System.out.printf("%-25s%1s%,12.2f\n","Tax:", "$", borrowedTaxAmt);
+		System.out.printf("%-25s%1s%,12.2f\n","Total Cost:", "$", borrowedTotalCost);
+		System.out.printf("\n%-25s%-30s\n", "Prize:", borrowedPrizeName);
+		System.out.println("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n");
+	}//End displayItemReceipt
+
+	public static void displayItemReceipt(String borrowedItemName, double borrowedItemPrice, int borrowedHowMany, String borrowedDiscountName, double borrowedDiscountRate, double borrowedDiscountAmt, double borrowedDiscountPrice, double borrowedSubTotal, double borrowedTaxRate, double borrowedTaxAmt, double borrowedTotalCost, String borrowedPrizeName)
+	{
+		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+		System.out.println("\t--Item Receipt--\n");
+		System.out.printf("%-25s%-20s\n","Item Name:", borrowedItemName);
+		System.out.printf("%-25s%1s%12.2f\n","Item Price:", "$",  borrowedItemPrice);
+		System.out.printf("%-25s%10d\n","Number of Item:", borrowedHowMany);
+		System.out.printf("%-25s%-12s\n","Discount Type:", borrowedDiscountName);
+		System.out.printf("%-25s%12.1f%%\n","Discount Rate:", borrowedDiscountRate * 100);
+		System.out.printf("%-25s%1s%12.2f\n","Discount Amount:", "$", borrowedDiscountAmt);
+		System.out.printf("%-25s%1s%12.2f\n","Discount Price:", "$", borrowedDiscountPrice);		
+		System.out.printf("%-25s%1s%,12.2f\n","Subtotal:", "$", borrowedSubTotal);
+		System.out.printf("%-25s%12.1f%%\n","Tax Rate:", borrowedTaxRate * 100);
+		System.out.printf("%-25s%1s%,12.2f\n","Tax:", "$", borrowedTaxAmt);
+		System.out.printf("%-25s%1s%,12.2f\n","Total Cost:", "$", borrowedTotalCost);
+		System.out.printf("\n%-25s%-30s\n", "Prize:", borrowedPrizeName);
+		System.out.println("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n");
+	}//End displayItemReceipt
+
+	public static void displayItemsSold(String[] borrowedItemNames, int[] borrowedItemCounts)
+	{
+		int localIndex = 0;
+		System.out.printf("\n%s\n", "-Times Item Sold-");
+
+		while (localIndex < borrowedItemCounts.length)
+		{
+			System.out.printf("%-26s%s%18d\n", borrowedItemNames[localIndex], ":", borrowedItemCounts[localIndex]);
+			localIndex++;
+		}
+	}//End displayItemsSold
+
+	public static void displayDiscounts(String[] borrowedDiscountNames, int[] borrowedDiscountCounts)
+	{
+		int localIndex = 0;
+		System.out.printf("\n%s\n", "-Discounts-");
+
+		while (localIndex < borrowedDiscountCounts.length)
+		{
+			System.out.printf("%-26s%s%18d\n", borrowedDiscountNames[localIndex], ":", borrowedDiscountCounts[localIndex]);
+			localIndex++;
+		}
+	}//End displayDiscounts
+
+	public static void displayPrizesGiven(String[] borrowedPrizeNames, int[] borrowedPrizeCounts)
+	{
+		int localIndex = 0;
+		System.out.printf("\n%s\n", "-Prizes Given-");
+
+		while (localIndex < borrowedPrizeCounts.length)
+		{
+			System.out.printf("%-26s%s%18d\n", borrowedPrizeNames[localIndex], ":", borrowedPrizeCounts[localIndex]);
+			localIndex++;
+		}
+	}//End displayPrizesGiven
+
+	public static void displayItemsStock(String[] borrowedItemNames, int[] borrowedInStockCounts)
+	{
+		int localIndex = 0;
+		System.out.printf("\n%s\n", "-Current Stock-");
+
+		while (localIndex < borrowedInStockCounts.length)
+		{
+			System.out.printf("%-26s%s%18d\n", borrowedItemNames[localIndex], ":", borrowedInStockCounts[localIndex]);
+			localIndex++;
+		}
+	}//End displayItemsStock
+
+	public static void displayWrittenOrders(int[] borrowedItemIDs, String[] borrowedItemNames , double[] borrowedItemPrices, int[] borrowedOrderQuantity, double[] borrowedOrderTotal, int borrowedRecordCount)
+	{
+		int localIndex = 0;
+		System.out.printf("\n%s\n", "-Orders-");
+
+		while (localIndex < borrowedRecordCount)
+		{
+			System.out.printf("%5d%15s%2s%8.2f%3d%2s%8.2f\n", borrowedItemIDs[localIndex], borrowedItemNames[localIndex], "$", borrowedItemPrices[localIndex], borrowedOrderQuantity[localIndex], "$", borrowedOrderTotal[localIndex]);
+			localIndex++;
+		}
+
+	}//End displayWrittenOrders
+
+	public static void displayFinalReport(String borrowedUserName,int[] borrowedItemIDs, String[] borrowedItemNames, double[] borrowedItemPrices, int[] borrowedOrderQuantity, double[] borrowedOrderTotal, int[] borrowedItemCounts, String[] borrowedDiscountNames, int[] borrowedDiscountCounts, String[] borrowedPrizeNames, int[] borrowedPrizeCounts, int[] borrowedInStockCounts, int borrowedRecordCount)
+	{
+		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+		System.out.printf("%-25s%-20s\n","User Name: ", borrowedUserName);
+		displayWrittenOrders( borrowedItemIDs, borrowedItemNames , borrowedItemPrices, borrowedOrderQuantity, borrowedOrderTotal, borrowedRecordCount);
+		displayItemsSold(borrowedItemNames, borrowedItemCounts);
+		displayDiscounts(borrowedDiscountNames, borrowedDiscountCounts);
+		displayPrizesGiven(borrowedPrizeNames, borrowedPrizeCounts);
+		displayItemsStock(borrowedItemNames, borrowedInStockCounts);		
+		System.out.println("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*\n");
+	}//End displayFinalReport
+
+	public static void displayFarewellMessage()
+	{
+		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+		System.out.println("Thanks for shopping with SodNotZod!");
+		System.out.println("Keep an eye out for those pesky Kryptonians!");
+		System.out.println("~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
+	}//End displayFarewellMessage
+
+}//End of MainClass

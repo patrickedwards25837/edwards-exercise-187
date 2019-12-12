@@ -89,25 +89,27 @@ public class MainClass {
 						{
 							displayItemReceipt(mySodOrder.getItemName(), mySodOrder.getItemPrice(), mySodOrder.getHowMany(), mySodOrder.getSubTotal(), mySodOrder.getTaxRate(), mySodOrder.getTaxAmt(), mySodOrder.getTotalCost(), mySodOrder.getPrizeName());
 						}//End if mySodOrder.getDiscountRate() > 0.0 decision
-
+						
 					}//End if mySodOrder.getInStockCount(currentInventory.getInStockCounts()) < mySodOrder.getHowMany() decision
 
 				}//End if currentInventory.getSearchIndex() < 0 decision
 
 			}//End if menuSelection =='A' decision
-
+			
 			menuSelection = validateMainMenu(input);
 
 		}//End while menuSelection != 'Q' loop
-
+		
 		if (mySodOrder.getTotalCost() > 0.0)
 		{
 			currentInventory.setLoadItems(sodOrders.getFileName(input), sodOrders.getRecordCount());
-
-			displayFinalReport(userName, currentInventory.getItemIDs(), currentInventory.getItemNames(), currentInventory.getItemPrices(), currentInventory.getOrderQuantity(), currentInventory.getOrderTotal(), mySodOrder.getItemCounts(), currentInventory.getDiscountNames(), mySodOrder.getDiscountCounts(), currentInventory.getPrizeNames(), mySodOrder.getPrizeCounts(), currentInventory.getInStockCounts(), sodOrders.getRecordCount());
-
+			
+			currentInventory.readWrittenOrders(sodOrders.getFileName(input), sodOrders.getRecordCount());
+			
+			displayFinalReport(userName, currentInventory.getItemNames(), currentInventory.getItemPrices(), currentInventory.getOrderQuantity(), currentInventory.getOrderTotal(), mySodOrder.getItemCounts(), currentInventory.getDiscountNames(), mySodOrder.getDiscountCounts(), currentInventory.getPrizeNames(), mySodOrder.getPrizeCounts(), currentInventory.getInStockCounts());
+			
 		}//End if mySodOrder.getTotalCost() > 0.0 decision
-
+		
 		displayFarewellMessage();
 
 	}//End of main
@@ -351,25 +353,11 @@ public class MainClass {
 			localIndex++;
 		}
 	}//End displayItemsStock
-
-	public static void displayWrittenOrders(int[] borrowedItemIDs, String[] borrowedItemNames , double[] borrowedItemPrices, int[] borrowedOrderQuantity, double[] borrowedOrderTotal, int borrowedRecordCount)
-	{
-		int localIndex = 0;
-		System.out.printf("\n%s\n", "-Orders-");
-
-		while (localIndex < borrowedRecordCount)
-		{
-			System.out.printf("%5d%15s%2s%8.2f%3d%2s%8.2f\n", borrowedItemIDs[localIndex], borrowedItemNames[localIndex], "$", borrowedItemPrices[localIndex], borrowedOrderQuantity[localIndex], "$", borrowedOrderTotal[localIndex]);
-			localIndex++;
-		}
-
-	}//End displayWrittenOrders
-
-	public static void displayFinalReport(String borrowedUserName,int[] borrowedItemIDs, String[] borrowedItemNames, double[] borrowedItemPrices, int[] borrowedOrderQuantity, double[] borrowedOrderTotal, int[] borrowedItemCounts, String[] borrowedDiscountNames, int[] borrowedDiscountCounts, String[] borrowedPrizeNames, int[] borrowedPrizeCounts, int[] borrowedInStockCounts, int borrowedRecordCount)
+	
+	public static void displayFinalReport(String borrowedUserName, String[] borrowedItemNames, double[] borrowedItemPrices, int[] borrowedOrderQuantity, double[] borrowedOrderTotal, int[] borrowedItemCounts, String[] borrowedDiscountNames, int[] borrowedDiscountCounts, String[] borrowedPrizeNames, int[] borrowedPrizeCounts, int[] borrowedInStockCounts)
 	{
 		System.out.println("\n~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*");
 		System.out.printf("%-25s%-20s\n","User Name: ", borrowedUserName);
-		displayWrittenOrders( borrowedItemIDs, borrowedItemNames , borrowedItemPrices, borrowedOrderQuantity, borrowedOrderTotal, borrowedRecordCount);
 		displayItemsSold(borrowedItemNames, borrowedItemCounts);
 		displayDiscounts(borrowedDiscountNames, borrowedDiscountCounts);
 		displayPrizesGiven(borrowedPrizeNames, borrowedPrizeCounts);
